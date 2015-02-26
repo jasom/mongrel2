@@ -55,7 +55,7 @@ static int cb_bind(int fd, int istcp, struct sockaddr *psa, size_t sz)
     /* set reuse flag for tcp */
     if(istcp && getsockopt(fd, SOL_SOCKET, SO_TYPE, (void*)&n, &sn) >= 0){
         n = 1;
-        rc = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char*)&n, sizeof n);
+        rc = setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, (char*)&n, sizeof n);
         check(rc != -1, "Failed to set bind socket to SO_REUSEADDR, that's messed up.");
     }
 
