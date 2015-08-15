@@ -927,6 +927,7 @@ Connection *Connection_create(Server *srv, int fd, int rport,
                               const char *remote)
 {
     Connection *conn = calloc(sizeof(Connection),1);
+    int rc;
     check_mem(conn);
 
     conn->req = Request_create();
@@ -963,7 +964,8 @@ Connection *Connection_create(Server *srv, int fd, int rport,
         //   will be used
         ssl_set_sni(&conn->iob->ssl, connection_sni_cb, conn);
 
-        ssl_set_dh_param(&conn->iob->ssl, srv->dhm_P, srv->dhm_G);
+        rc = ssl_set_dh_param(&conn->iob->ssl, srv->dhm_P, srv->dhm_G);
+	check(rc == 0, "Error setting dh_param: %d",rc);
         ssl_set_ciphersuites(&conn->iob->ssl, srv->ciphers);
     } else {
         conn->iob = IOBuf_create(BUFFER_SIZE, fd, IOBUF_SOCKET);

@@ -109,10 +109,10 @@ static CipherName cipher_table[] =
     _CIPHER(TLS_RSA_WITH_3DES_EDE_CBC_SHA),                 // TLSv1.0
 #endif
 #ifdef POLARSSL_KEY_EXCHANGE_DHE_RSA_ENABLED
-    // TLS_DHE_RSA_WITH_AES_128_CBC_SHA is weak do not use it
-    // TLS_DHE_RSA_WITH_AES_256_CBC_SHA is weak do not use it
-    // TLS_DHE_RSA_WITH_AES_128_CBC_SHA256 is weak do not use it
-    // TLS_DHE_RSA_WITH_AES_256_CBC_SHA256 is weak do not use it
+    _CIPHER(TLS_DHE_RSA_WITH_AES_128_CBC_SHA),
+    _CIPHER(TLS_DHE_RSA_WITH_AES_256_CBC_SHA),
+    _CIPHER(TLS_DHE_RSA_WITH_AES_128_CBC_SHA256),
+    _CIPHER(TLS_DHE_RSA_WITH_AES_256_CBC_SHA256),
     // TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA is weak do not use it
     // TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA is weak do not use it
     // TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256 is weak do not use it
@@ -192,8 +192,8 @@ static CipherName cipher_table[] =
     // TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA is weak do not use it
     // TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA is weak do not use it
     // TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256 is weak do not use it
-    // TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 is weak do not use it
-    // TLS_DHE_RSA_WITH_AES_256_GCM_SHA384 is weak do not use it
+    _CIPHER(TLS_DHE_RSA_WITH_AES_128_GCM_SHA256),
+    _CIPHER(TLS_DHE_RSA_WITH_AES_256_GCM_SHA384),
 #endif
 #ifdef POLARSSL_ECDH_C
     // TLS_ECDHE_RSA_WITH_NULL_SHA is weak do not use it
@@ -313,6 +313,10 @@ static int Server_init_ssl(Server *srv)
     
     bstring ca_chain = Setting_get_str("ssl.ca_chain", NULL);
 
+    bstring ssl_dhm_p = Setting_get_str("ssl_dhm_p",NULL);
+
+    bstring ssl_dhm_g = Setting_get_str("ssl_dhm_g",NULL);
+
     if ( ca_chain != NULL ) {
 
         rc = x509_crt_parse_file(&srv->ca_chain, bdata(ca_chain));
@@ -331,9 +335,17 @@ static int Server_init_ssl(Server *srv)
         srv->ciphers = ssl_list_ciphersuites();
     }
 
-    srv->dhm_P = ssl_default_dhm_P;
-    srv->dhm_G = ssl_default_dhm_G;
+    if(ssl_dhm_p && ssl_dhm_g) {
+        srv->dhm_P = bstr2cstr(ssl_dhm_p,'z');
+        srv->dhm_G = bstr2cstr(ssl_dhm_g,'z');
+    }
+    else {
+        srv->dhm_P = ssl_default_dhm_P;
+        srv->dhm_G = ssl_default_dhm_G;
+    }
 
+    bdestroy(ssl_dhm_p);
+    bdestroy(ssl_dhm_g);
     bdestroy(certdir);
     bdestroy(certpath);
     bdestroy(keypath);

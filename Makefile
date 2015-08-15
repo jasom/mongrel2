@@ -77,6 +77,9 @@ src/polarssl/include/polarssl/config.h: src/polarssl/include/polarssl/version.h 
 	fi
 
 
+bin/dh_genprime: build/libm2.a src/polarssl/programs/pkey/dh_genprime.c
+	$(CC) $(CFLAGS) src/polarssl/programs/pkey/dh_genprime.c -o $@ $< $(LIBS)
+
 bin/mongrel2: build/libm2.a src/mongrel2.o
 	$(CC) $(CFLAGS) src/mongrel2.o -o $@ $< $(LIBS)
 
