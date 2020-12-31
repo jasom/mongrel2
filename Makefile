@@ -1,7 +1,8 @@
 CFLAGS?=-g -O2
 CFLAGS += -Wall -Wextra -I./src -DNDEBUG -D_FILE_OFFSET_BITS=64 -pthread
 CFLAGS += ${OPTFLAGS}
-LIBS+=-lzmq -ldl -lsqlite3 -lmbedtls -lmbedx509 -lmbedcrypto
+PLATFORM_LIBS=-ldl
+LIBS+=-lzmq -lsqlite3 -lmbedtls -lmbedx509 -lmbedcrypto
 PREFIX?=/usr/local
 
 get_objs = $(addsuffix .o,$(basename $(wildcard $(1))))
@@ -28,7 +29,7 @@ builddirs:
 	@mkdir -p bin
 
 bin/mongrel2: build/libm2.a src/mongrel2.o
-	$(CC) $(CFLAGS) $(LDFLAGS) src/mongrel2.o -o $@ $< $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) src/mongrel2.o -o $@ $< $(LIBS) $(PLATFORM_LIBS)
 
 build/libm2.a: CFLAGS += -fPIC
 build/libm2.a: ${LIB_OBJ}
@@ -37,12 +38,12 @@ build/libm2.a: ${LIB_OBJ}
 
 clean:
 	rm -rf build bin lib ${OBJECTS} ${TESTS} tests/config.sqlite
-	rm -f tests/perf.log 
-	rm -f tests/test.pid 
-	rm -f tests/tests.log 
-	rm -f tests/empty.sqlite 
+	rm -f tests/perf.log
+	rm -f tests/test.pid
+	rm -f tests/tests.log
+	rm -f tests/empty.sqlite
 	rm -f tools/lemon/lemon
-	rm -f tools/m2sh/tests/tests.log 
+	rm -f tools/m2sh/tests/tests.log
 	rm -rf release-scripts/output
 	find . \( -name "*.gcno" -o -name "*.gcda" \) -exec rm {} \;
 	${MAKE} -C tools/m2sh OPTLIB=${OPTLIB} clean
@@ -72,7 +73,7 @@ tests/config.sqlite: src/config/config.sql src/config/example.sql src/config/mim
 	sqlite3 $@ < src/config/mimetypes.sql
 
 $(TESTS): %: %.c build/libm2.a
-	$(CC) $(CFLAGS) -o $@ $< build/libm2.a $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< build/libm2.a $(LIBS) $(PLATFORM_LIBS)
 
 src/state.c: src/state.rl src/state_machine.rl
 src/http11/http11_parser.c: src/http11/http11_parser.rl
@@ -162,18 +163,18 @@ release: tarball
 
 netbsd: OPTFLAGS += -I/usr/local/include -I/usr/pkg/include
 netbsd: LDFLAGS += -L/usr/local/lib -L/usr/pkg/lib
-netbsd: LIBS=-lzmq -lsqlite3 $(LDFLAGS)
+netbsd: PLATFORM_LIBS =
 netbsd: dev
 
 
 freebsd: OPTFLAGS += -I/usr/local/include
 freebsd: LDFLAGS += -L/usr/local/lib -pthread
-freebsd: LIBS=-lzmq -lsqlite3 $(LDFLAGS)
+freebsd: PLATFORM_LIBS = 
 freebsd: all
 
-openbsd: OPTFLAGS += -I/usr/local/include
+openbsd: OPTFLAGS += -I/usr/local/include -fPIC
 openbsd: LDFLAGS += -L/usr/local/lib -pthread
-openbsd: LIBS=-lzmq -lsqlite3 $(LDFLAGS)
+openbsd: PLATFORM_LIBS = 
 openbsd: all
 
 solaris: OPTFLAGS += -I/usr/local/include
